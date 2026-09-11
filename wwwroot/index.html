@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PeopleFlow | Employee Management</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- =========================================================
+         SIDEBAR
+    ========================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                <img src="/image/logo.jpg" alt="PeopleFlow Logo">
+            </div>
+
+            <div>
+                <div class="brand-name">PeopleFlow</div>
+                <div class="brand-subtitle">EMPLOYEE MANAGEMENT</div>
+            </div>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-title">WORKSPACE</div>
+
+            <a href="#"
+               class="nav-item active"
+               id="dashboardNav"
+               onclick="showDashboard(); return false;">
+
+                <span class="nav-icon">⌂</span>
+                <span>Dashboard</span>
+
+            </a>
+
+            <a href="#"
+               class="nav-item"
+               id="employeesNav"
+               onclick="showEmployees(); return false;">
+
+                <span class="nav-icon">♙</span>
+                <span>Employees</span>
+
+            </a>
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <div class="help-box">
+
+                <div class="help-icon">?</div>
+
+                <div>
+                    <strong>Need help?</strong>
+                    <span>Contact administrator</span>
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+    ========================================================== -->
+
+    <main class="main-content">
+
+        <!-- TOPBAR -->
+
+        <header class="topbar">
+
+            <div>
+                <span id="pageTitle">Dashboard</span>
+            </div>
+
+            <div class="topbar-right">
+
+                <div class="notification">
+                    🔔
+                </div>
+
+                <div class="user-profile">
+
+                    <div class="user-avatar">
+                        M
+                    </div>
+
+                    <div class="user-details">
+                        <strong>Administrator</strong>
+                        <span>HR Manager</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE CONTENT -->
+
+        <section class="page-content">
+
+
+            <!-- =====================================================
+                 DASHBOARD
+            ====================================================== -->
+
+            <div id="dashboardSection">
+
+                <div class="hero">
+
+                    <div class="hero-content">
+
+                        <span class="hero-label">
+                            EMPLOYEE MANAGEMENT
+                        </span>
+
+                        <h1>
+                            Welcome back 👋
+                        </h1>
+
+                        <p>
+                            Manage your workforce, track employee
+                            information and keep your organization
+                            running smoothly.
+                        </p>
+
+                        <button
+                            class="hero-button"
+                            onclick="showEmployees()">
+
+                            Manage Employees
+                            <span>→</span>
+
+                        </button>
+
+                    </div>
+
+
+                    <div class="hero-visual">
+
+                        <div class="hero-circle circle-one"></div>
+                        <div class="hero-circle circle-two"></div>
+
+                        <div class="dashboard-illustration">
+
+                            <div class="illustration-header">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+
+                            <div class="illustration-content">
+
+                                <div class="mini-card">
+
+                                    <div class="mini-icon">
+                                        👥
+                                    </div>
+
+                                    <div>
+                                        <strong id="heroEmployeeCount">
+                                            0
+                                        </strong>
+
+                                        <small>
+                                            Employees
+                                        </small>
+                                    </div>
+
+                                </div>
+
+                                <div class="mini-chart">
+
+                                    <div class="chart-bar bar1"></div>
+                                    <div class="chart-bar bar2"></div>
+                                    <div class="chart-bar bar3"></div>
+                                    <div class="chart-bar bar4"></div>
+                                    <div class="chart-bar bar5"></div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- OVERVIEW -->
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <h2>Overview</h2>
+
+                        <p>
+                            Employee statistics at a glance
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- STATISTICS -->
+
+                <div class="stats-grid">
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon purple">
+                                👥
+                            </div>
+
+                            <span>TOTAL EMPLOYEES</span>
+
+                        </div>
+
+                        <div
+                            class="stat-number"
+                            id="totalEmployees">
+
+                            0
+
+                        </div>
+
+                        <div class="stat-description">
+                            Current workforce
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon green">
+                                ✓
+                            </div>
+
+                            <span>ACTIVE</span>
+
+                        </div>
+
+                        <div
+                            class="stat-number"
+                            id="activeEmployees">
+
+                            0
+
+                        </div>
+
+                        <div class="stat-description">
+                            Active employees
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon orange">
+                                ◷
+                            </div>
+
+                            <span>INACTIVE</span>
+
+                        </div>
+
+                        <div
+                            class="stat-number"
+                            id="inactiveEmployees">
+
+                            0
+
+                        </div>
+
+                        <div class="stat-description">
+                            Currently inactive
+                        </div>
+
+                    </div>
+
+
+                    <div class="stat-card">
+
+                        <div class="stat-top">
+
+                            <div class="stat-icon blue">
+                                ♙
+                            </div>
+
+                            <span>AVERAGE AGE</span>
+
+                        </div>
+
+                        <div
+                            class="stat-number"
+                            id="averageAge">
+
+                            0
+
+                        </div>
+
+                        <div class="stat-description">
+                            Average employee age
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- RECENT EMPLOYEES -->
+
+                <div class="section-heading recent-heading">
+
+                    <div>
+
+                        <h2>Recent Employees</h2>
+
+                        <p>
+                            Latest employees in your organization
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="secondary-button"
+                        onclick="showEmployees()">
+
+                        View All →
+
+                    </button>
+
+                </div>
+
+
+                <div class="table-card">
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>ID</th>
+                                    <th>EMPLOYEE</th>
+                                    <th>AGE</th>
+                                    <th>STATUS</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="recentEmployees">
+
+                                <tr>
+
+                                    <td
+                                        colspan="4"
+                                        class="loading">
+
+                                        Loading employees...
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 EMPLOYEES
+            ====================================================== -->
+
+            <div
+                id="employeesSection"
+                class="hidden">
+
+                <div class="page-header">
+
+                    <div>
+
+                        <span class="hero-label dark-label">
+                            PEOPLE DIRECTORY
+                        </span>
+
+                        <h1>Employees</h1>
+
+                        <p>
+                            Search, add and manage your employees.
+                        </p>
+
+                    </div>
+
+
+                    <div class="header-buttons">
+
+                        <button
+                            class="csv-button"
+                            onclick="document.getElementById('csvFile').click()">
+
+                            ↓ Import CSV
+
+                        </button>
+
+                        <input
+                            type="file"
+                            id="csvFile"
+                            accept=".csv"
+                            hidden
+                            onchange="importCSV(event)">
+
+
+                        <button
+                            class="csv-button"
+                            onclick="exportCSV()">
+
+                            ↑ Export CSV
+
+                        </button>
+
+
+                        <button
+                            class="primary-button"
+                            onclick="openAddModal()">
+
+                            + Add Employee
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <p class="csv-help">
+                    Import .csv files using the columns:
+                    ID, Name, Age, Status and Photo.
+                    Exported employee files can be imported again with photos.
+                </p>
+
+
+                <!-- TOOLBAR -->
+
+                <div class="toolbar">
+
+                    <div class="search-box">
+
+                        <span>🔍</span>
+
+                        <input
+                            type="text"
+                            id="searchInput"
+                            placeholder="Search employee by name or ID...">
+
+                    </div>
+
+
+                    <div class="filter">
+
+                        <label>Status</label>
+
+                        <select id="statusFilter">
+
+                            <option value="All">
+                                All Employees
+                            </option>
+
+                            <option value="Active">
+                                Active
+                            </option>
+
+                            <option value="Inactive">
+                                Inactive
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <div class="filter">
+
+                        <label>Sort</label>
+
+                        <select id="sortFilter">
+
+                            <option value="newest">
+                                Newest First
+                            </option>
+
+                            <option value="oldest">
+                                Oldest First
+                            </option>
+
+                            <option value="nameAsc">
+                                Name A-Z
+                            </option>
+
+                            <option value="nameDesc">
+                                Name Z-A
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <!-- EMPLOYEE TABLE -->
+
+                <div class="table-card">
+
+                    <div class="table-header">
+
+                        <div>
+
+                            <h2>
+                                Employee List
+                            </h2>
+
+                            <p id="employeeCount">
+                                0 employees
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="table-wrapper">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>ID</th>
+                                    <th>EMPLOYEE</th>
+                                    <th>AGE</th>
+                                    <th>STATUS</th>
+                                    <th>ACTIONS</th>
+                                </tr>
+
+                            </thead>
+
+                            <!-- IMPORTANT: JS uses this exact ID -->
+
+                            <tbody id="employeeTableBody">
+
+                                <tr>
+
+                                    <td
+                                        colspan="5"
+                                        class="loading">
+
+                                        Loading employees...
+
+                                    </td>
+
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+
+                    <div class="pagination-container">
+
+                        <span id="paginationInfo">
+                            Showing 0 employees
+                        </span>
+
+                        <div
+                            id="pagination"
+                            class="pagination">
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================================================
+         ADD / EDIT MODAL
+    ========================================================== -->
+
+    <div
+        id="employeeModal"
+        class="modal-overlay">
+
+        <div class="modal">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <span class="hero-label dark-label">
+                        EMPLOYEE
+                    </span>
+
+                    <h2 id="modalTitle">
+                        Add Employee
+                    </h2>
+
+                </div>
+
+                <button
+                    type="button"
+                    class="close-button"
+                    onclick="closeEmployeeModal()">
+
+                    ×
+
+                </button>
+
+            </div>
+
+
+            <form id="employeeForm">
+
+                <div class="form-group">
+
+                    <label>
+                        Employee ID
+                    </label>
+
+                    <input
+                        type="text"
+                        id="employeeId"
+                        disabled
+                        value="Auto generated">
+
+                    <small>
+                        ID is unique and cannot be edited.
+                    </small>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="employeeName">
+                        Employee Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="employeeName"
+                        maxlength="100"
+                        placeholder="Enter employee name"
+                        required>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="employeeAge">
+                        Age
+                    </label>
+
+                    <input
+                        type="number"
+                        id="employeeAge"
+                        min="1"
+                        max="100"
+                        placeholder="Enter age"
+                        required>
+
+                    <small>
+                        Age must be between 1 and 100.
+                    </small>
+
+                </div>
+
+
+                <!-- PHOTO -->
+
+                <div class="form-group">
+
+                    <label for="employeePhoto">
+                        Employee Photo
+                    </label>
+
+                    <input
+                        type="file"
+                        id="employeePhoto"
+                        accept="image/jpeg,image/png,image/webp,image/jpg">
+
+                    <small>
+                        Upload JPG, JPEG, PNG or WEBP image.
+                    </small>
+
+
+                    <div
+                        id="photoPreviewContainer"
+                        class="photo-preview-container">
+
+                        <img
+                            id="photoPreview"
+                            src=""
+                            alt="Employee Photo Preview">
+
+                    </div>
+
+                </div>
+
+
+                <!-- STATUS -->
+
+                <div
+                    class="form-group"
+                    id="statusGroup">
+
+                    <label for="employeeStatus">
+                        Status
+                    </label>
+
+                    <select id="employeeStatus">
+
+                        <option value="Active">
+                            Active
+                        </option>
+
+                        <option value="Inactive">
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="cancel-button"
+                        onclick="closeEmployeeModal()">
+
+                        Cancel
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="primary-button">
+
+                        Save Employee
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         TOAST
+    ========================================================== -->
+
+    <div id="toast" class="toast"></div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
