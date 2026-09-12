@@ -1978,7 +1978,7 @@ async function exportCSV() {
 
 
         link.download =
-            "employees.csv";
+            "employees.xlsx";
 
 
         document.body.appendChild(
@@ -1996,10 +1996,19 @@ async function exportCSV() {
             url
         );
 
+
+        showToast(
+            "Employees exported successfully.",
+            "success"
+        );
+
     }
     catch (error) {
 
-        console.error(error);
+        console.error(
+            "Export error:",
+            error
+        );
 
 
         showToast(
@@ -2011,8 +2020,6 @@ async function exportCSV() {
     }
 
 }
-
-
 // ============================================================
 // IMPORT CSV
 // ============================================================

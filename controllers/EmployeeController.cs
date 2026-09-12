@@ -1,6 +1,7 @@
 using System;
-using System.Text;
+using System.IO;
 using Microsoft.AspNetCore.Mvc;
+using ClosedXML.Excel;
 using MANASI;
 
 namespace MANASI.Controllers
@@ -233,35 +234,179 @@ namespace MANASI.Controllers
                 });
             }
         }
-        [HttpGet("export")]
+  [HttpGet("export")]
 public IActionResult ExportEmployees()
 {
     try
     {
         var employees = _services.GetEmployees();
 
-        var csv = new StringBuilder();
+        using var workbook = new XLWorkbook();
 
-        // CSV Header
-        csv.AppendLine("ID,Name,Age,Status,Photo");
+        var worksheet = workbook.Worksheets.Add("Employees");
+
+        // ====================================================
+        // HEADER
+        // ====================================================
+
+        worksheet.Cell(1, 1).Value = "ID";
+        worksheet.Cell(1, 2).Value = "Name";
+        worksheet.Cell(1, 3).Value = "Age";
+        worksheet.Cell(1, 4).Value = "Status";
+        worksheet.Cell(1, 5).Value = "Photo";
+
+        var headerRange = worksheet.Range("A1:E1");
+
+        headerRange.Style.Font.Bold = true;
+        headerRange.Style.Alignment.Horizontal =
+            XLAlignmentHorizontalValues.Center;
+        headerRange.Style.Alignment.Vertical =
+            XLAlignmentVerticalValues.Center;
+
+        // ====================================================
+        // EMPLOYEE DATA
+        // ====================================================
+
+        int row = 2;
 
         foreach (var employee in employees)
         {
-            csv.AppendLine(
-                $"{EscapeCsv(employee.Id.ToString())}," +
-                $"{EscapeCsv(employee.Name)}," +
-                $"{EscapeCsv(employee.Age.ToString())}," +
-                $"{EscapeCsv(employee.Status)}," +
-                $"{EscapeCsv(employee.Photo)}"
-            );
+            worksheet.Cell(row, 1).Value = employee.Id;
+            worksheet.Cell(row, 2).Value = employee.Name;
+            worksheet.Cell(row, 3).Value = employee.Age;
+            worksheet.Cell(row, 4).Value = employee.Status;
+
+            // ====================================================
+            // PHOTO
+            // ====================================================
+
+            if (!string.IsNullOrWhiteSpace(employee.Photo))
+            {
+                try
+                {
+                    string photo = employee.Photo.Trim();
+
+                    // Remove Data URL prefix
+                    if (photo.StartsWith("data:image/",
+                        StringComparison.OrdinalIgnoreCase))
+                    {
+                        int commaIndex = photo.IndexOf(',');
+
+                        if (commaIndex >= 0)
+                        {
+                            photo = photo.Substring(
+                                commaIndex + 1
+                            );
+                        }
+                    }
+
+                    // Remove whitespace
+                    photo = photo.Replace(
+                        "\r",
+                        ""
+                    ).Replace(
+                        "\n",
+                        ""
+                    ).Trim();
+
+                    // Convert Base64 → image bytes
+                    byte[] imageBytes =
+                        Convert.FromBase64String(photo);
+
+                    using var imageStream =
+                        new MemoryStream(imageBytes);
+
+                    // Add actual image to Excel
+                    var picture =
+                        worksheet.AddPicture(imageStream)
+                                 .MoveTo(
+                                     worksheet.Cell(row, 5)
+                                 );
+
+                    picture.Width = 80;
+                    picture.Height = 80;
+                }
+                catch (Exception photoException)
+                {
+                    Console.WriteLine(
+                        $"Photo export failed for employee {employee.Id}: " +
+                        photoException.Message
+                    );
+                }
+            }
+
+            row++;
         }
 
-        var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+        // ====================================================
+        // FORMAT
+        // ====================================================
+
+        worksheet.Column(1).Width = 10;
+        worksheet.Column(2).Width = 25;
+        worksheet.Column(3).Width = 10;
+        worksheet.Column(4).Width = 15;
+        worksheet.Column(5).Width = 15;
+
+        // Give rows enough height for photos
+        for (int i = 2; i < row; i++)
+        {
+            worksheet.Row(i).Height = 65;
+        }
+
+        // Center ID, Age, Status and Photo
+        worksheet.Column(1).Style.Alignment.Horizontal =
+            XLAlignmentHorizontalValues.Center;
+
+        worksheet.Column(3).Style.Alignment.Horizontal =
+            XLAlignmentHorizontalValues.Center;
+
+        worksheet.Column(4).Style.Alignment.Horizontal =
+            XLAlignmentHorizontalValues.Center;
+
+        worksheet.Column(5).Style.Alignment.Horizontal =
+            XLAlignmentHorizontalValues.Center;
+
+        worksheet.Column(1).Style.Alignment.Vertical =
+            XLAlignmentVerticalValues.Center;
+
+        worksheet.Column(2).Style.Alignment.Vertical =
+            XLAlignmentVerticalValues.Center;
+
+        worksheet.Column(3).Style.Alignment.Vertical =
+            XLAlignmentVerticalValues.Center;
+
+        worksheet.Column(4).Style.Alignment.Vertical =
+            XLAlignmentVerticalValues.Center;
+
+        worksheet.Column(5).Style.Alignment.Vertical =
+            XLAlignmentVerticalValues.Center;
+
+        // Add filter
+        worksheet.Range(
+            1,
+            1,
+            Math.Max(1, row - 1),
+            5
+        ).SetAutoFilter();
+
+        // Freeze header
+        worksheet.SheetView.FreezeRows(1);
+
+        // ====================================================
+        // RETURN EXCEL FILE
+        // ====================================================
+
+        using var stream = new MemoryStream();
+
+        workbook.SaveAs(stream);
+
+        byte[] bytes = stream.ToArray();
 
         return File(
             bytes,
-            "text/csv",
-            "employees.csv"
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "employees.xlsx"
         );
     }
     catch (Exception ex)
@@ -274,28 +419,6 @@ public IActionResult ExportEmployees()
             error = ex.Message
         });
     }
-}
-
-private string EscapeCsv(string value)
-{
-    if (string.IsNullOrEmpty(value))
-    {
-        return "";
-    }
-
-    // Escape quotes
-    value = value.Replace("\"", "\"\"");
-
-    // Wrap fields containing special CSV characters
-    if (value.Contains(",") ||
-        value.Contains("\"") ||
-        value.Contains("\n") ||
-        value.Contains("\r"))
-    {
-        return $"\"{value}\"";
-    }
-
-    return value;
 }
 
         [HttpPost("import")]
