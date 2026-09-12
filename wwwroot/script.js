@@ -1933,32 +1933,468 @@ async function deleteEmployee() {
 
 }
 
-
 // ============================================================
-// EXPORT CSV
+// EXPORT EXCEL WITH ACTUAL PHOTOS
 // ============================================================
 
 async function exportCSV() {
 
     try {
 
-        const response =
-            await fetch(
-                "/api/employees/export"
-            );
-
-
-        if (!response.ok) {
+        // Check ExcelJS
+        if (typeof ExcelJS === "undefined") {
 
             throw new Error(
-                "Unable to export employees."
+                "Excel export library could not be loaded."
             );
 
         }
 
 
+        // Make sure we have the latest employees
+        const response =
+            await fetch("/api/employees");
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Unable to load employees for export."
+            );
+
+        }
+
+
+        const data =
+            await response.json();
+
+
+        const exportEmployees =
+            Array.isArray(data)
+                ? data.map(employee => ({
+
+                    id:
+                        Number(employee.id),
+
+                    name:
+                        String(
+                            employee.name || ""
+                        ),
+
+                    age:
+                        Number(
+                            employee.age || 0
+                        ),
+
+                    status:
+                        employee.status === "Inactive"
+                            ? "Inactive"
+                            : "Active",
+
+                    photo:
+                        normalizePhoto(
+                            employee.photo
+                        )
+
+                }))
+                : [];
+
+
+        if (exportEmployees.length === 0) {
+
+            showToast(
+                "No employees available to export.",
+                "error"
+            );
+
+            return;
+
+        }
+
+
+        // ====================================================
+        // CREATE WORKBOOK
+        // ====================================================
+
+        const workbook =
+            new ExcelJS.Workbook();
+
+
+        workbook.creator =
+            "PeopleFlow";
+
+
+        workbook.lastModifiedBy =
+            "PeopleFlow";
+
+
+        workbook.created =
+            new Date();
+
+
+        workbook.modified =
+            new Date();
+
+
+        const worksheet =
+            workbook.addWorksheet(
+                "Employees"
+            );
+
+
+        // ====================================================
+        // COLUMN WIDTHS
+        // ====================================================
+
+        worksheet.columns = [
+
+            {
+                header: "ID",
+                key: "id",
+                width: 10
+            },
+
+            {
+                header: "Name",
+                key: "name",
+                width: 25
+            },
+
+            {
+                header: "Age",
+                key: "age",
+                width: 10
+            },
+
+            {
+                header: "Status",
+                key: "status",
+                width: 15
+            },
+
+            {
+                header: "Photo",
+                key: "photo",
+                width: 18
+            }
+
+        ];
+
+
+        // ====================================================
+        // HEADER STYLE
+        // ====================================================
+
+        const headerRow =
+            worksheet.getRow(1);
+
+
+        headerRow.height = 25;
+
+
+        headerRow.eachCell(
+            function (cell) {
+
+                cell.font = {
+
+                    bold: true
+
+                };
+
+
+                cell.alignment = {
+
+                    vertical: "middle",
+
+                    horizontal: "center"
+
+                };
+
+            }
+        );
+
+
+        // ====================================================
+        // ADD EMPLOYEES
+        // ====================================================
+
+        exportEmployees.forEach(
+            function (employee) {
+
+                const row =
+                    worksheet.addRow({
+
+                        id:
+                            employee.id,
+
+                        name:
+                            employee.name,
+
+                        age:
+                            employee.age,
+
+                        status:
+                            employee.status,
+
+                        photo:
+                            ""
+
+                    });
+
+
+                row.height = 80;
+
+
+                // Center normal data
+                row.getCell(1).alignment = {
+
+                    vertical: "middle",
+
+                    horizontal: "center"
+
+                };
+
+
+                row.getCell(2).alignment = {
+
+                    vertical: "middle",
+
+                    horizontal: "left"
+
+                };
+
+
+                row.getCell(3).alignment = {
+
+                    vertical: "middle",
+
+                    horizontal: "center"
+
+                };
+
+
+                row.getCell(4).alignment = {
+
+                    vertical: "middle",
+
+                    horizontal: "center"
+
+                };
+
+
+                row.getCell(5).alignment = {
+
+                    vertical: "middle",
+
+                    horizontal: "center"
+
+                };
+
+
+                // =================================================
+                // ADD ACTUAL PHOTO
+                // =================================================
+
+                if (employee.photo) {
+
+                    try {
+
+                        let imageData =
+                            employee.photo;
+
+
+                        // Remove data URL prefix
+                        // ExcelJS accepts base64 data,
+                        // but using extension separately
+                        // is more reliable.
+
+                        let extension =
+                            "jpeg";
+
+
+                        if (
+                            imageData.startsWith(
+                                "data:image/png"
+                            )
+                        ) {
+
+                            extension =
+                                "png";
+
+                        }
+                        else if (
+                            imageData.startsWith(
+                                "data:image/webp"
+                            )
+                        ) {
+
+                            extension =
+                                "png";
+
+                        }
+                        else if (
+                            imageData.startsWith(
+                                "data:image/gif"
+                            )
+                        ) {
+
+                            extension =
+                                "gif";
+
+                        }
+
+
+                        const commaIndex =
+                            imageData.indexOf(",");
+
+
+                        if (
+                            commaIndex !== -1
+                        ) {
+
+                            imageData =
+                                imageData.substring(
+                                    commaIndex + 1
+                                );
+
+                        }
+
+
+                        const imageId =
+                            workbook.addImage({
+
+                                base64:
+                                    imageData,
+
+                                extension:
+                                    extension
+
+                            });
+
+
+                        worksheet.addImage(
+                            imageId,
+                            {
+
+                                tl: {
+
+                                    col: 4.15,
+
+                                    row:
+                                        row.number - 1 +
+                                        0.10
+
+                                },
+
+                                ext: {
+
+                                    width: 70,
+
+                                    height: 70
+
+                                }
+
+                            }
+                        );
+
+                    }
+                    catch (photoError) {
+
+                        console.error(
+                            "Unable to add photo for employee:",
+                            employee.id,
+                            photoError
+                        );
+
+                        row.getCell(5).value =
+                            "Photo unavailable";
+
+                    }
+
+                }
+                else {
+
+                    row.getCell(5).value =
+                        "No photo";
+
+                }
+
+            }
+        );
+
+
+        // ====================================================
+        // BORDERS
+        // ====================================================
+
+        worksheet.eachRow(
+            function (row) {
+
+                row.eachCell(
+                    function (cell) {
+
+                        cell.border = {
+
+                            top: {
+                                style: "thin"
+                            },
+
+                            left: {
+                                style: "thin"
+                            },
+
+                            bottom: {
+                                style: "thin"
+                            },
+
+                            right: {
+                                style: "thin"
+                            }
+
+                        };
+
+                    }
+                );
+
+            }
+        );
+
+
+        // ====================================================
+        // FREEZE HEADER
+        // ====================================================
+
+        worksheet.views = [
+
+            {
+
+                state: "frozen",
+
+                ySplit: 1
+
+            }
+
+        ];
+
+
+        // ====================================================
+        // GENERATE XLSX
+        // ====================================================
+
+        const buffer =
+            await workbook.xlsx.writeBuffer();
+
+
         const blob =
-            await response.blob();
+            new Blob(
+                [
+                    buffer
+                ],
+                {
+                    type:
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                }
+            );
 
 
         const url =
@@ -1998,7 +2434,7 @@ async function exportCSV() {
 
 
         showToast(
-            "Employees exported successfully.",
+            "Employees exported with photos successfully.",
             "success"
         );
 
