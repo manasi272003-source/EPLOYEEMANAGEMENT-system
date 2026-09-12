@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using MANASI;
 
@@ -232,6 +233,70 @@ namespace MANASI.Controllers
                 });
             }
         }
+        [HttpGet("export")]
+public IActionResult ExportEmployees()
+{
+    try
+    {
+        var employees = _services.GetEmployees();
+
+        var csv = new StringBuilder();
+
+        // CSV Header
+        csv.AppendLine("ID,Name,Age,Status,Photo");
+
+        foreach (var employee in employees)
+        {
+            csv.AppendLine(
+                $"{EscapeCsv(employee.Id.ToString())}," +
+                $"{EscapeCsv(employee.Name)}," +
+                $"{EscapeCsv(employee.Age.ToString())}," +
+                $"{EscapeCsv(employee.Status)}," +
+                $"{EscapeCsv(employee.Photo)}"
+            );
+        }
+
+        var bytes = Encoding.UTF8.GetBytes(csv.ToString());
+
+        return File(
+            bytes,
+            "text/csv",
+            "employees.csv"
+        );
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.ToString());
+
+        return StatusCode(500, new
+        {
+            message = "Unable to export employees.",
+            error = ex.Message
+        });
+    }
+}
+
+private string EscapeCsv(string value)
+{
+    if (string.IsNullOrEmpty(value))
+    {
+        return "";
+    }
+
+    // Escape quotes
+    value = value.Replace("\"", "\"\"");
+
+    // Wrap fields containing special CSV characters
+    if (value.Contains(",") ||
+        value.Contains("\"") ||
+        value.Contains("\n") ||
+        value.Contains("\r"))
+    {
+        return $"\"{value}\"";
+    }
+
+    return value;
+}
 
         [HttpPost("import")]
         public IActionResult ImportEmployee(
