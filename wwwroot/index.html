@@ -432,20 +432,20 @@
 
                     <div class="header-buttons">
 
-                        <button
-                            class="csv-button"
-                            onclick="document.getElementById('csvFile').click()">
+                       <button
+    class="csv-button"
+    onclick="document.getElementById('csvFile').click()">
 
-                            ↓ Import CSV
+    ↓ Import Excel
 
-                        </button>
+</button>
 
-                        <input
-                            type="file"
-                            id="csvFile"
-                            accept=".csv"
-                            hidden
-                            onchange="importCSV(event)">
+<input
+    type="file"
+    id="csvFile"
+    accept=".xlsx"
+    hidden
+    onchange="importXLSX(event)">
 
 
                         <button
@@ -470,11 +470,11 @@
                 </div>
 
 
-                <p class="csv-help">
-                    Import .csv files using the columns:
-                    ID, Name, Age, Status and Photo.
-                    Exported employee files can be imported again with photos.
-                </p>
+               <p class="csv-help">
+    Import .xlsx files using the columns:
+    ID, Name, Age and Status. Embed a photo directly in a cell
+    next to each row and it will be imported as that employee's photo.
+</p>
 
 
                 <!-- TOOLBAR -->

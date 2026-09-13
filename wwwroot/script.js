@@ -2460,305 +2460,173 @@ async function exportCSV() {
 // IMPORT CSV
 // ============================================================
 
-async function importCSV(event) {
+// ============================================================
+// IMPORT XLSX (with embedded photos)
+// ============================================================
 
-    const file =
-        event.target.files &&
-        event.target.files[0];
+async function importXLSX(event) {
 
+    const file = event.target.files && event.target.files[0];
 
     if (!file) {
         return;
     }
 
-
     try {
 
-        const text =
-            await file.text();
-
-
-        const rows =
-            parseCSV(text);
-
-
-        if (rows.length < 2) {
-
-            throw new Error(
-                "CSV file is empty."
-            );
-
+        if (typeof ExcelJS === "undefined") {
+            throw new Error("Excel import library could not be loaded.");
         }
 
+        const buffer = await file.arrayBuffer();
 
-        const headers =
-            rows[0].map(
-                header =>
-                    header
-                        .trim()
-                        .toLowerCase()
-            );
+        const workbook = new ExcelJS.Workbook();
+        await workbook.xlsx.load(buffer);
 
+        const worksheet = workbook.worksheets[0];
 
-        const idIndex =
-            headers.indexOf("id");
-
-
-        const nameIndex =
-            headers.indexOf("name");
-
-
-        const ageIndex =
-            headers.indexOf("age");
-
-
-        const statusIndex =
-            headers.indexOf("status");
-
-
-        const photoIndex =
-            headers.indexOf("photo");
-
-
-        if (
-            idIndex === -1 ||
-            nameIndex === -1 ||
-            ageIndex === -1
-        ) {
-
-            throw new Error(
-                "CSV must contain ID, Name and Age columns."
-            );
-
+        if (!worksheet) {
+            throw new Error("No worksheet found in the file.");
         }
 
+        // --------------------------------------------------
+        // Map each embedded image to the row it sits next to
+        // --------------------------------------------------
+
+        const rowPhotos = {};
+
+        const images = worksheet.getImages();
+
+        images.forEach(image => {
+
+            const media = workbook.model.media[image.imageId];
+
+            if (!media || !media.buffer) {
+                return;
+            }
+
+            const anchorRow =
+                image.range.tl.nativeRow !== undefined
+                    ? image.range.tl.nativeRow
+                    : Math.round(image.range.tl.row);
+
+            const rowNumber = anchorRow + 1;
+
+            const base64 = arrayBufferToBase64(media.buffer);
+
+            rowPhotos[rowNumber] =
+                `data:image/${media.extension};base64,${base64}`;
+        });
+
+        // --------------------------------------------------
+        // Locate columns from the header row dynamically
+        // --------------------------------------------------
+
+        const headerRow = worksheet.getRow(1);
+        const headers = [];
+
+        headerRow.eachCell((cell, colNumber) => {
+            headers[colNumber] = String(cell.value || "").trim().toLowerCase();
+        });
+
+        const idCol = headers.indexOf("id");
+        const nameCol = headers.indexOf("name");
+        const ageCol = headers.indexOf("age");
+        const statusCol = headers.indexOf("status");
+
+        if (nameCol === -1 || ageCol === -1) {
+            throw new Error("Excel file must contain Name and Age columns.");
+        }
+
+        // --------------------------------------------------
+        // Walk data rows, attach matching photo, send to API
+        // --------------------------------------------------
 
         let imported = 0;
 
+        for (let rowNumber = 2; rowNumber <= worksheet.rowCount; rowNumber++) {
 
-        for (
-            let i = 1;
-            i < rows.length;
-            i++
-        ) {
+            const row = worksheet.getRow(rowNumber);
 
-            const row =
-                rows[i];
+            const nameValue = row.getCell(nameCol).value;
 
-
-            if (!row.length) {
+            if (!nameValue) {
                 continue;
             }
 
-
             const employee = {
 
-                id:
-                    Number(
-                        row[idIndex]
-                    ),
+                id: idCol !== -1 ? Number(row.getCell(idCol).value) || 0 : 0,
 
-                name:
-                    row[nameIndex] ||
-                    "",
+                name: String(nameValue || ""),
 
-                age:
-                    Number(
-                        row[ageIndex]
-                    ),
+                age: Number(row.getCell(ageCol).value) || 0,
 
                 status:
-                    statusIndex !== -1 &&
-                    row[statusIndex] ===
-                    "Inactive"
+                    statusCol !== -1 &&
+                    row.getCell(statusCol).value === "Inactive"
                         ? "Inactive"
                         : "Active",
 
-                photo:
-                    photoIndex !== -1
-                        ? normalizePhoto(
-                            row[photoIndex]
-                        )
-                        : ""
-
+                photo: rowPhotos[rowNumber] || ""
             };
 
+            const response = await fetch("/api/employees/import", {
 
-            const response =
-                await fetch(
-                    "/api/employees/import",
-                    {
+                method: "POST",
 
-                        method:
-                            "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
 
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify(
-                                employee
-                            )
-
-                    }
-                );
-
+                body: JSON.stringify(employee)
+            });
 
             if (response.ok) {
-
                 imported++;
-
             }
-
         }
-
 
         showToast(
             `${imported} employee(s) imported successfully.`,
             "success"
         );
 
-
         await loadEmployees();
 
     }
     catch (error) {
 
-        console.error(error);
-
+        console.error("Import XLSX error:", error);
 
         showToast(
-            error.message ||
-            "Unable to import CSV.",
+            error.message || "Unable to import Excel file.",
             "error"
         );
 
     }
     finally {
 
-        event.target.value =
-            "";
-
+        event.target.value = "";
     }
-
 }
 
+function arrayBufferToBase64(buffer) {
 
-// ============================================================
-// CSV PARSER
-// ============================================================
+    let binary = "";
 
-function parseCSV(text) {
+    const bytes = new Uint8Array(buffer);
+    const chunkSize = 0x8000;
 
-    const rows = [];
+    for (let i = 0; i < bytes.length; i += chunkSize) {
 
-    let row = [];
+        const chunk = bytes.subarray(i, i + chunkSize);
 
-    let value = "";
-
-    let insideQuotes = false;
-
-
-    for (
-        let i = 0;
-        i < text.length;
-        i++
-    ) {
-
-        const char =
-            text[i];
-
-
-        const next =
-            text[i + 1];
-
-
-        if (
-            char === '"' &&
-            insideQuotes &&
-            next === '"'
-        ) {
-
-            value += '"';
-
-            i++;
-
-        }
-        else if (
-            char === '"'
-        ) {
-
-            insideQuotes =
-                !insideQuotes;
-
-        }
-        else if (
-            char === "," &&
-            !insideQuotes
-        ) {
-
-            row.push(value);
-
-            value = "";
-
-        }
-        else if (
-            (
-                char === "\n" ||
-                char === "\r"
-            ) &&
-            !insideQuotes
-        ) {
-
-            if (
-                char === "\r" &&
-                next === "\n"
-            ) {
-
-                i++;
-
-            }
-
-
-            row.push(value);
-
-            rows.push(row);
-
-            row = [];
-
-            value = "";
-
-        }
-        else {
-
-            value += char;
-
-        }
-
+        binary += String.fromCharCode.apply(null, chunk);
     }
 
-
-    if (
-        value.length > 0 ||
-        row.length > 0
-    ) {
-
-        row.push(value);
-
-        rows.push(row);
-
-    }
-
-
-    return rows;
-
+    return btoa(binary);
 }
-
-
 // ============================================================
 // PAGINATION
 // ============================================================
